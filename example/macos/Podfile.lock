@@ -1,0 +1,22 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - liquid_glass_container (0.1.0):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - liquid_glass_container (from `Flutter/ephemeral/.symlinks/plugins/liquid_glass_container/macos`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  liquid_glass_container:
+    :path: Flutter/ephemeral/.symlinks/plugins/liquid_glass_container/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  liquid_glass_container: c75a30b23ad74641c2c3aea3eececf704315e679
+
+PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
+
+COCOAPODS: 1.16.2

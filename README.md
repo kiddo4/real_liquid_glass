@@ -2,13 +2,13 @@
 
 Real Liquid Glass for Flutter — not a shader imitation.
 
-<img src="https://raw.githubusercontent.com/kiddo4/liquid_glass_container/main/doc/demo.png" width="320" alt="Demo: glass cards and a floating glass bottom bar refracting a colorful backdrop" />
+<img src="https://raw.githubusercontent.com/kiddo4/liquid_glass_container/main/doc/demo.png" width="320" alt="Demo: a glass droplet merged into a glass pill, cards, and a floating glass bottom bar refracting a colorful backdrop" />
 
-
-On iOS 26+ these widgets host Apple's native `UIGlassEffect` material in a
-platform view beneath your Flutter content, so you get **actual refractive
-Liquid Glass**: it samples and bends what's behind it, shimmers on touch,
-and — because it's the system material — automatically follows every system
+On iOS 26+ and macOS 26+ these widgets host Apple's native glass material
+(`UIGlassEffect` / `NSGlassEffectView`) in a platform view beneath your
+Flutter content, so you get **actual refractive Liquid Glass**: it samples
+and bends what's behind it, shimmers on touch, merges like droplets, and —
+because it's the system material — automatically follows every system
 appearance setting, including:
 
 - the **iOS 27 transparency slider** (ultra-clear → fully tinted),
@@ -16,8 +16,8 @@ appearance setting, including:
 - iOS 27's refined edges, highlights, and content diffusion.
 
 Elsewhere it degrades gracefully behind the same API: a native system blur
-on iOS < 26, and a Flutter-drawn frosted material on Android, web, and
-desktop (with high-contrast support and an intensity dial).
+on iOS/macOS < 26, and a Flutter-drawn frosted material on Android, web,
+Windows, and Linux (with high-contrast support and an intensity dial).
 
 ## Widgets
 
@@ -38,6 +38,31 @@ Options: `style` (`LiquidGlassStyle.regular` for legibility, `.clear` over
 media), `shape` (`.capsule()` or `.roundedRectangle(r)`), `tint`,
 `interactive` (Apple's touch shimmer), and `Container`-style `padding`,
 `margin`, `width`, `height`, `alignment`.
+
+### `LiquidGlassGroup` — true liquid merging
+
+The signature behavior from Apple's demos: glass shapes that fuse like
+droplets when they approach each other. Wrap any subtree and every
+`LiquidGlassContainer` inside it shares one native glass container
+(`UIGlassContainerEffect` / `NSGlassEffectContainerView`):
+
+```dart
+LiquidGlassGroup(
+  spacing: 32, // distance at which shapes begin to merge
+  child: Stack(
+    children: [
+      Align(child: LiquidGlassContainer(
+        shape: const LiquidGlassShape.capsule(), width: 200, height: 64)),
+      Positioned(
+        left: _x, top: _y, // animate or drag this — the glass morphs along
+        child: LiquidGlassContainer(
+          shape: const LiquidGlassShape.capsule(), width: 64, height: 64)),
+    ],
+  ),
+)
+```
+
+Bonus: N containers in a group cost **one** platform view, not N.
 
 ### `LiquidGlassBottomBar`
 
@@ -85,9 +110,21 @@ if (caps.reduceTransparency) { /* user prefers opaque surfaces */ }
 
 ## Requirements
 
-- iOS: builds with Xcode 26+ (iOS 26 SDK). Runs on any iOS version the app
-  supports — glass on 26+, system blur before that.
+- iOS / macOS: builds with Xcode 26+ (iOS/macOS 26 SDK). Runs on any OS
+  version the app supports — glass on 26+, system blur before that.
 - Other platforms: no setup; the Dart fallback is dependency-free.
+
+## Alternatives
+
+Honest map of the space: [native_liquid_glass](https://pub.dev/packages/native_liquid_glass)
+wraps ~20 native iOS controls (buttons, pickers, sheets…) if you want a
+whole widget suite; [cupertino_native](https://pub.dev/packages/cupertino_native)
+embeds complete native bars; shader packages like
+[liquid_glass_renderer](https://pub.dev/packages/liquid_glass_renderer)
+imitate the look anywhere without native views. This package instead stays
+deliberately small: one glass **container primitive** you compose into
+anything, plus a bottom bar, with **liquid merging for arbitrary
+containers** and **macOS support** — and zero Dart dependencies.
 
 ## Example
 

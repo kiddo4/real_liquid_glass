@@ -32,3 +32,5 @@ flutter:
     platforms:
       ios:
         pluginClass: LiquidGlassContainerPlugin
+      macos:
+        pluginClass: LiquidGlassContainerPlugin

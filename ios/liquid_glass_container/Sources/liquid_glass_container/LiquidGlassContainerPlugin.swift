@@ -11,6 +11,9 @@ public class LiquidGlassContainerPlugin: NSObject, FlutterPlugin {
     registrar.register(
       GlassViewFactory(messenger: registrar.messenger()),
       withId: "liquid_glass_container/glass_view")
+    registrar.register(
+      GlassGroupViewFactory(messenger: registrar.messenger()),
+      withId: "liquid_glass_container/glass_group")
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -153,11 +156,147 @@ final class GlassHostView: UIView {
       capsule ? min(bounds.width, bounds.height) / 2 : cornerRadius
   }
 
-  private static func color(argb: Int64) -> UIColor {
+  static func color(argb: Int64) -> UIColor {
     UIColor(
       red: CGFloat((argb >> 16) & 0xFF) / 255,
       green: CGFloat((argb >> 8) & 0xFF) / 255,
       blue: CGFloat(argb & 0xFF) / 255,
       alpha: CGFloat((argb >> 24) & 0xFF) / 255)
+  }
+}
+
+final class GlassGroupViewFactory: NSObject, FlutterPlatformViewFactory {
+  private let messenger: FlutterBinaryMessenger
+
+  init(messenger: FlutterBinaryMessenger) {
+    self.messenger = messenger
+    super.init()
+  }
+
+  func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
+    FlutterStandardMessageCodec.sharedInstance()
+  }
+
+  func create(
+    withFrame frame: CGRect,
+    viewIdentifier viewId: Int64,
+    arguments args: Any?
+  ) -> FlutterPlatformView {
+    GlassGroupPlatformView(frame: frame, viewId: viewId, messenger: messenger)
+  }
+}
+
+/// One native view hosting many glass shapes so they can merge.
+///
+/// On iOS 26+ the outer UIVisualEffectView carries UIGlassContainerEffect:
+/// child glass shapes within `spacing` points of each other fuse into one
+/// continuous form, with the morph animated by the system material. Flutter
+/// streams shape geometry every frame via the `setRegions` channel call.
+final class GlassGroupPlatformView: NSObject, FlutterPlatformView {
+  private struct ShapeMaterial: Equatable {
+    let style: String
+    let tint: Int64?
+  }
+
+  private let container = UIVisualEffectView()
+  private let channel: FlutterMethodChannel
+  private var shapes: [Int: UIVisualEffectView] = [:]
+  private var materials: [Int: ShapeMaterial] = [:]
+  private var spacing: CGFloat = -1
+
+  init(frame: CGRect, viewId: Int64, messenger: FlutterBinaryMessenger) {
+    container.frame = frame
+    container.isUserInteractionEnabled = false
+    channel = FlutterMethodChannel(
+      name: "liquid_glass_container/glass_group_\(viewId)",
+      binaryMessenger: messenger)
+    super.init()
+    channel.setMethodCallHandler { [weak self] call, result in
+      guard let self else { return result(FlutterMethodNotImplemented) }
+      switch call.method {
+      case "setRegions":
+        self.setRegions(call.arguments as? [String: Any] ?? [:])
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  func view() -> UIView { container }
+
+  private func setRegions(_ args: [String: Any]) {
+    let newSpacing = CGFloat((args["spacing"] as? NSNumber)?.doubleValue ?? 24)
+    if #available(iOS 26.0, *), newSpacing != spacing {
+      spacing = newSpacing
+      let effect = UIGlassContainerEffect()
+      effect.spacing = newSpacing
+      container.effect = effect
+    }
+
+    let regions = args["regions"] as? [[String: Any]] ?? []
+    var seen = Set<Int>()
+    for region in regions {
+      guard let id = (region["id"] as? NSNumber)?.intValue else { continue }
+      seen.insert(id)
+      let shape = shapes[id] ?? makeShape(id: id)
+      apply(region: region, id: id, to: shape)
+    }
+    for (id, shape) in shapes where !seen.contains(id) {
+      shape.removeFromSuperview()
+      shapes[id] = nil
+      materials[id] = nil
+    }
+  }
+
+  private func makeShape(id: Int) -> UIVisualEffectView {
+    let shape = UIVisualEffectView()
+    shape.isUserInteractionEnabled = false
+    shapes[id] = shape
+    container.contentView.addSubview(shape)
+    return shape
+  }
+
+  private func apply(region: [String: Any], id: Int, to shape: UIVisualEffectView) {
+    shape.frame = CGRect(
+      x: (region["x"] as? NSNumber)?.doubleValue ?? 0,
+      y: (region["y"] as? NSNumber)?.doubleValue ?? 0,
+      width: (region["width"] as? NSNumber)?.doubleValue ?? 0,
+      height: (region["height"] as? NSNumber)?.doubleValue ?? 0)
+    let capsule = region["capsule"] as? Bool ?? false
+    let radius = CGFloat((region["cornerRadius"] as? NSNumber)?.doubleValue ?? 0)
+    let material = ShapeMaterial(
+      style: region["style"] as? String ?? "regular",
+      tint: (region["tint"] as? NSNumber)?.int64Value)
+    let tint = material.tint.map { GlassHostView.color(argb: $0) }
+
+    if #available(iOS 26.0, *) {
+      // Rebuild the effect only when the material changes; frames stream in
+      // every animation tick and replacing the effect each time would
+      // defeat the system's merge animation.
+      if materials[id] != material {
+        materials[id] = material
+        let glass: UIGlassEffect
+        if material.style == "clear" {
+          glass = UIGlassEffect(style: .clear)
+        } else {
+          glass = UIGlassEffect(style: .regular)
+        }
+        if let tint { glass.tintColor = tint }
+        shape.effect = glass
+      }
+      shape.cornerConfiguration =
+        capsule ? .capsule() : .uniformCorners(radius: .fixed(radius))
+    } else {
+      if materials[id] != material {
+        materials[id] = material
+        shape.effect = UIBlurEffect(style: .systemMaterial)
+        shape.contentView.backgroundColor = tint?.withAlphaComponent(0.25)
+      }
+      shape.clipsToBounds = true
+      shape.layer.cornerCurve = .continuous
+      shape.layer.cornerRadius =
+        capsule ? min(shape.bounds.width, shape.bounds.height) / 2 : radius
+    }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'capabilities.dart';
 import 'fallback_glass.dart';
+import 'glass_group.dart';
 import 'glass_style.dart';
 import 'native_glass_view.dart';
 
@@ -80,19 +81,32 @@ class LiquidGlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget surface = LiquidGlass.isNativePlatform
-        ? NativeGlassView(
-            style: style,
-            shape: shape,
-            tint: tint,
-            interactive: interactive,
-          )
-        : FallbackGlass(
-            style: style,
-            shape: shape,
-            tint: tint,
-            intensity: fallbackIntensity,
-          );
+    final Widget surface;
+    if (!LiquidGlass.isNativePlatform) {
+      surface = FallbackGlass(
+        style: style,
+        shape: shape,
+        tint: tint,
+        intensity: fallbackIntensity,
+      );
+    } else {
+      // Inside a LiquidGlassGroup the group's single native view draws all
+      // shapes (so they can merge); this container only reports geometry.
+      final group = GlassGroupScope.maybeOf(context);
+      surface = group != null
+          ? GlassRegionReporter(
+              group: group,
+              style: style,
+              shape: shape,
+              tint: tint,
+            )
+          : NativeGlassView(
+              style: style,
+              shape: shape,
+              tint: tint,
+              interactive: interactive,
+            );
+    }
 
     Widget? content = child;
     if (alignment != null && content != null) {

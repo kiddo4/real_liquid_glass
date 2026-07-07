@@ -27,6 +27,7 @@ class _GlassDemoScreenState extends State<GlassDemoScreen> {
   LiquidGlassStyle _style = LiquidGlassStyle.regular;
   double _intensity = 1.0;
   LiquidGlassCapabilities? _caps;
+  Offset _droplet = const Offset(16, 68);
 
   @override
   void initState() {
@@ -123,6 +124,51 @@ class _GlassDemoScreenState extends State<GlassDemoScreen> {
                           style: TextStyle(fontSize: 12, height: 1.5),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Liquid merging — drag the droplet into the pill',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFFFFFFF),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 200,
+                    child: LiquidGlassGroup(
+                      spacing: 32,
+                      child: Stack(
+                        children: [
+                          Align(
+                            child: LiquidGlassContainer(
+                              shape: const LiquidGlassShape.capsule(),
+                              style: _style,
+                              width: 200,
+                              height: 64,
+                              child: const Center(child: Text('Drop zone')),
+                            ),
+                          ),
+                          Positioned(
+                            left: _droplet.dx,
+                            top: _droplet.dy,
+                            child: GestureDetector(
+                              onPanUpdate: (d) => setState(
+                                  () => _droplet += d.delta),
+                              child: LiquidGlassContainer(
+                                shape: const LiquidGlassShape.capsule(),
+                                style: _style,
+                                width: 64,
+                                height: 64,
+                                child: const Icon(CupertinoIcons.drop_fill,
+                                    size: 22),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),

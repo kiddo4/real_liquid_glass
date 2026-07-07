@@ -69,6 +69,46 @@ void main() {
     });
   });
 
+  group('LiquidGlassGroup', () {
+    Widget twoShapes() => host(
+          SizedBox(
+            width: 300,
+            height: 200,
+            child: LiquidGlassGroup(
+              child: const Stack(
+                children: [
+                  Positioned(
+                    left: 10,
+                    top: 10,
+                    child: LiquidGlassContainer(width: 80, height: 80),
+                  ),
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: LiquidGlassContainer(width: 80, height: 80),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+    testWidgets('on iOS, N containers share one platform view',
+        (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      await tester.pumpWidget(twoShapes());
+      expect(find.byType(UiKitView), findsOneWidget);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('off-iOS, is a passthrough with per-container fallbacks',
+        (tester) async {
+      await tester.pumpWidget(twoShapes());
+      expect(find.byType(UiKitView), findsNothing);
+      expect(find.byType(BackdropFilter), findsNWidgets(2));
+    });
+  });
+
   group('LiquidGlassBottomBar', () {
     const items = [
       LiquidGlassBarItem(icon: CupertinoIcons.house, label: 'Home'),

@@ -1,14 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'glass_style.dart';
 
-/// Embeds the native UIVisualEffectView that carries the glass material.
+/// Embeds the native effect view that carries the glass material.
 ///
-/// On iOS 26+ this is real UIGlassEffect Liquid Glass; on older iOS it is
-/// a UIBlurEffect system material. Either way the effect samples the
-/// content rendered beneath it — Flutter widgets included.
+/// On iOS 26+ / macOS 26+ this is real UIGlassEffect /
+/// NSGlassEffectView Liquid Glass; on older systems it is a blur
+/// material. Either way the effect samples the content rendered beneath
+/// it — Flutter widgets included.
 class NativeGlassView extends StatefulWidget {
   const NativeGlassView({
     super.key,
@@ -51,20 +53,28 @@ class _NativeGlassViewState extends State<NativeGlassView> {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      ignoring: !widget.interactive,
-      child: UiKitView(
-        viewType: 'liquid_glass_container/glass_view',
-        creationParams: _params,
-        creationParamsCodec: const StandardMessageCodec(),
-        hitTestBehavior: widget.interactive
-            ? PlatformViewHitTestBehavior.opaque
-            : PlatformViewHitTestBehavior.transparent,
-        onPlatformViewCreated: (id) {
-          _viewChannel =
-              MethodChannel('liquid_glass_container/glass_view_$id');
-        },
-      ),
-    );
+    final hitTestBehavior = widget.interactive
+        ? PlatformViewHitTestBehavior.opaque
+        : PlatformViewHitTestBehavior.transparent;
+    final Widget view = defaultTargetPlatform == TargetPlatform.macOS
+        ? AppKitView(
+            viewType: 'liquid_glass_container/glass_view',
+            creationParams: _params,
+            creationParamsCodec: const StandardMessageCodec(),
+            hitTestBehavior: hitTestBehavior,
+            onPlatformViewCreated: _onViewCreated,
+          )
+        : UiKitView(
+            viewType: 'liquid_glass_container/glass_view',
+            creationParams: _params,
+            creationParamsCodec: const StandardMessageCodec(),
+            hitTestBehavior: hitTestBehavior,
+            onPlatformViewCreated: _onViewCreated,
+          );
+    return IgnorePointer(ignoring: !widget.interactive, child: view);
+  }
+
+  void _onViewCreated(int id) {
+    _viewChannel = MethodChannel('liquid_glass_container/glass_view_$id');
   }
 }

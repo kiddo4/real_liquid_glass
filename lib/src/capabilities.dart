@@ -41,10 +41,13 @@ abstract final class LiquidGlass {
 
   /// Whether this platform hosts the native glass platform view at all.
   ///
-  /// True on iOS (any version — pre-26 devices get a native blur material
-  /// instead of glass). The Flutter-drawn fallback is used everywhere else.
+  /// True on iOS and macOS (any version — pre-26 devices get a native
+  /// blur material instead of glass). The Flutter-drawn fallback is used
+  /// everywhere else.
   static bool get isNativePlatform =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
 
   /// Device capabilities, fetched once and cached.
   ///
