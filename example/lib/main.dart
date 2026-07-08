@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:liquid_glass_container/liquid_glass_container.dart';
+import 'package:real_liquid_glass/real_liquid_glass.dart';
 
 void main() => runApp(const GlassDemoApp());
 

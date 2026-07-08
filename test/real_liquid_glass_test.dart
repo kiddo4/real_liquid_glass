@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:liquid_glass_container/liquid_glass_container.dart';
+import 'package:real_liquid_glass/real_liquid_glass.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -174,7 +174,7 @@ void main() {
     testWidgets('parses the native reply on iOS', (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        const MethodChannel('liquid_glass_container'),
+        const MethodChannel('real_liquid_glass'),
         (call) async => {
           'nativeGlass': true,
           'reduceTransparency': false,

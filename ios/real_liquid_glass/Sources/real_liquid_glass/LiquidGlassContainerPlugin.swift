@@ -4,16 +4,16 @@ import UIKit
 public class LiquidGlassContainerPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "liquid_glass_container",
+      name: "real_liquid_glass",
       binaryMessenger: registrar.messenger())
     let instance = LiquidGlassContainerPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
     registrar.register(
       GlassViewFactory(messenger: registrar.messenger()),
-      withId: "liquid_glass_container/glass_view")
+      withId: "real_liquid_glass/glass_view")
     registrar.register(
       GlassGroupViewFactory(messenger: registrar.messenger()),
-      withId: "liquid_glass_container/glass_group")
+      withId: "real_liquid_glass/glass_group")
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -75,7 +75,7 @@ final class GlassPlatformView: NSObject, FlutterPlatformView {
   ) {
     container = GlassHostView(frame: frame, args: args ?? [:])
     channel = FlutterMethodChannel(
-      name: "liquid_glass_container/glass_view_\(viewId)",
+      name: "real_liquid_glass/glass_view_\(viewId)",
       binaryMessenger: messenger)
     super.init()
     channel.setMethodCallHandler { [weak self] call, result in
@@ -208,7 +208,7 @@ final class GlassGroupPlatformView: NSObject, FlutterPlatformView {
     container.frame = frame
     container.isUserInteractionEnabled = false
     channel = FlutterMethodChannel(
-      name: "liquid_glass_container/glass_group_\(viewId)",
+      name: "real_liquid_glass/glass_group_\(viewId)",
       binaryMessenger: messenger)
     super.init()
     channel.setMethodCallHandler { [weak self] call, result in

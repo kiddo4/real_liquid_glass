@@ -58,14 +58,14 @@ class _NativeGlassViewState extends State<NativeGlassView> {
         : PlatformViewHitTestBehavior.transparent;
     final Widget view = defaultTargetPlatform == TargetPlatform.macOS
         ? AppKitView(
-            viewType: 'liquid_glass_container/glass_view',
+            viewType: 'real_liquid_glass/glass_view',
             creationParams: _params,
             creationParamsCodec: const StandardMessageCodec(),
             hitTestBehavior: hitTestBehavior,
             onPlatformViewCreated: _onViewCreated,
           )
         : UiKitView(
-            viewType: 'liquid_glass_container/glass_view',
+            viewType: 'real_liquid_glass/glass_view',
             creationParams: _params,
             creationParamsCodec: const StandardMessageCodec(),
             hitTestBehavior: hitTestBehavior,
@@ -75,6 +75,6 @@ class _NativeGlassViewState extends State<NativeGlassView> {
   }
 
   void _onViewCreated(int id) {
-    _viewChannel = MethodChannel('liquid_glass_container/glass_view_$id');
+    _viewChannel = MethodChannel('real_liquid_glass/glass_view_$id');
   }
 }

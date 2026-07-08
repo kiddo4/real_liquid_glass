@@ -36,7 +36,7 @@ class LiquidGlassCapabilities {
 
 /// Entry point for querying Liquid Glass support at runtime.
 abstract final class LiquidGlass {
-  static const MethodChannel _channel = MethodChannel('liquid_glass_container');
+  static const MethodChannel _channel = MethodChannel('real_liquid_glass');
   static Future<LiquidGlassCapabilities>? _capabilities;
 
   /// Whether this platform hosts the native glass platform view at all.

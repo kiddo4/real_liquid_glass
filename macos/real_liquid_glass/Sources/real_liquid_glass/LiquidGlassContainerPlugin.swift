@@ -4,16 +4,16 @@ import FlutterMacOS
 public class LiquidGlassContainerPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
-      name: "liquid_glass_container",
+      name: "real_liquid_glass",
       binaryMessenger: registrar.messenger)
     let instance = LiquidGlassContainerPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
     registrar.register(
       GlassViewFactory(messenger: registrar.messenger),
-      withId: "liquid_glass_container/glass_view")
+      withId: "real_liquid_glass/glass_view")
     registrar.register(
       GlassGroupViewFactory(messenger: registrar.messenger),
-      withId: "liquid_glass_container/glass_group")
+      withId: "real_liquid_glass/glass_group")
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -56,7 +56,7 @@ final class GlassViewFactory: NSObject, FlutterPlatformViewFactory {
   func create(withViewIdentifier viewId: Int64, arguments args: Any?) -> NSView {
     let host = GlassHostView(args: args as? [String: Any] ?? [:])
     let channel = FlutterMethodChannel(
-      name: "liquid_glass_container/glass_view_\(viewId)",
+      name: "real_liquid_glass/glass_view_\(viewId)",
       binaryMessenger: messenger)
     channel.setMethodCallHandler { [weak host] call, result in
       switch call.method {
@@ -174,7 +174,7 @@ final class GlassGroupHostView: NSView {
     super.init(frame: .zero)
     wantsLayer = true
     let channel = FlutterMethodChannel(
-      name: "liquid_glass_container/glass_group_\(viewId)",
+      name: "real_liquid_glass/glass_group_\(viewId)",
       binaryMessenger: messenger)
     channel.setMethodCallHandler { [weak self] call, result in
       guard let self else { return result(FlutterMethodNotImplemented) }

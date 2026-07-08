@@ -1,7 +1,12 @@
+import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
+import 'capabilities.dart';
 import 'glass_container.dart';
+import 'glass_group.dart';
 import 'glass_style.dart';
 
 /// One destination in a [LiquidGlassBottomBar].
@@ -27,8 +32,14 @@ class LiquidGlassBarItem {
 /// A floating capsule tab bar in the iOS 26/27 Liquid Glass idiom.
 ///
 /// Sits above your content (typically in a [Stack], aligned to the
-/// bottom) so the glass has something to refract. The selected
-/// destination is marked by a sliding highlight pill.
+/// bottom) so the glass has something to refract.
+///
+/// On iOS/macOS the selected destination is marked by a **liquid glass
+/// droplet** riding the bar's top rim: tap another destination and the
+/// droplet hops out of the bar, arcs across, and lands again — merging
+/// back into the glass like a drop of water (set [liquidSelection] to
+/// false for a plain sliding pill instead). On other platforms a sliding
+/// highlight pill marks the selection.
 ///
 /// ```dart
 /// LiquidGlassBottomBar(
@@ -40,7 +51,7 @@ class LiquidGlassBarItem {
 ///   onTap: (i) => setState(() => _index = i),
 /// )
 /// ```
-class LiquidGlassBottomBar extends StatelessWidget {
+class LiquidGlassBottomBar extends StatefulWidget {
   /// Creates the bar. [items] needs at least two destinations.
   const LiquidGlassBottomBar({
     super.key,
@@ -53,6 +64,8 @@ class LiquidGlassBottomBar extends StatelessWidget {
     this.margin = const EdgeInsets.fromLTRB(24, 8, 24, 16),
     this.showLabels = true,
     this.fallbackIntensity = 1.0,
+    this.liquidSelection = true,
+    this.dropletSize = 30,
   }) : assert(items.length >= 2, 'Provide at least two destinations');
 
   /// The destinations to display, in order.
@@ -71,7 +84,7 @@ class LiquidGlassBottomBar extends StatelessWidget {
   /// Glass variant for the bar surface.
   final LiquidGlassStyle style;
 
-  /// Bar height, excluding [margin].
+  /// Bar height, excluding [margin] and the droplet overhang.
   final double height;
 
   /// Spacing around the floating bar. The default keeps it clear of the
@@ -81,65 +94,172 @@ class LiquidGlassBottomBar extends StatelessWidget {
   /// Whether to show labels under the icons.
   final bool showLabels;
 
-  /// Fallback-effect strength on non-iOS platforms; see
+  /// Fallback-effect strength on non-Apple platforms; see
   /// [LiquidGlassContainer.fallbackIntensity].
   final double fallbackIntensity;
+
+  /// Marks the selection with a glass droplet that hops between
+  /// destinations and merges into the bar (iOS/macOS only). When false —
+  /// and always on fallback platforms — a sliding highlight pill is used.
+  final bool liquidSelection;
+
+  /// Diameter of the selection droplet when [liquidSelection] is active.
+  final double dropletSize;
 
   static const Color _pillLight = Color(0x14000000);
   static const Color _pillDark = Color(0x2EFFFFFF);
 
   @override
-  Widget build(BuildContext context) {
-    final dark =
-        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
-    final selectedColor = tint ?? CupertinoTheme.of(context).primaryColor;
-    final unselectedColor = CupertinoColors.secondaryLabel.resolveFrom(context);
+  State<LiquidGlassBottomBar> createState() => _LiquidGlassBottomBarState();
+}
 
+class _LiquidGlassBottomBarState extends State<LiquidGlassBottomBar> {
+  late int _from = widget.currentIndex;
+
+  @override
+  void didUpdateWidget(LiquidGlassBottomBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _from = oldWidget.currentIndex;
+    }
+  }
+
+  Color _selectedColor(BuildContext context) =>
+      widget.tint ?? CupertinoTheme.of(context).primaryColor;
+
+  Color _unselectedColor(BuildContext context) =>
+      CupertinoColors.secondaryLabel.resolveFrom(context);
+
+  void _handleTap(int index) {
+    HapticFeedback.selectionClick();
+    widget.onTap(index);
+  }
+
+  Widget _itemRow(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < widget.items.length; i++)
+          Expanded(
+            child: _BarItem(
+              item: widget.items[i],
+              selected: i == widget.currentIndex,
+              selectedColor: _selectedColor(context),
+              unselectedColor: _unselectedColor(context),
+              showLabel: widget.showLabels,
+              onTap: () => _handleTap(i),
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.liquidSelection && LiquidGlass.isNativePlatform) {
+      return _buildLiquid(context);
+    }
+    return _buildClassic(context);
+  }
+
+  /// Native path: bar and droplet share a [LiquidGlassGroup], so the
+  /// droplet visibly fuses with the bar rim and morphs while it travels.
+  Widget _buildLiquid(BuildContext context) {
+    // How far the droplet pokes above the bar while resting.
+    final overhang = widget.dropletSize * 0.45;
+    return Padding(
+      padding: widget.margin,
+      child: SizedBox(
+        height: widget.height + overhang,
+        child: LiquidGlassGroup(
+          spacing: widget.dropletSize,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = constraints.maxWidth / widget.items.length;
+              double centerX(int i) => itemWidth * i + itemWidth / 2;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: overhang,
+                    bottom: 0,
+                    child: LiquidGlassContainer(
+                      shape: const LiquidGlassShape.capsule(),
+                      style: widget.style,
+                      child: _itemRow(context),
+                    ),
+                  ),
+                  TweenAnimationBuilder<double>(
+                    // Restart the hop whenever the selection changes.
+                    key: ValueKey<int>(widget.currentIndex),
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 420),
+                    curve: Curves.easeInOutCubic,
+                    builder: (context, t, child) {
+                      final x = lerpDouble(
+                          centerX(_from), centerX(widget.currentIndex), t)!;
+                      // Rise out of the glass mid-flight, land at the end.
+                      final hop =
+                          math.sin(math.pi * t) * widget.dropletSize * 0.6;
+                      return Positioned(
+                        left: x - widget.dropletSize / 2,
+                        top: -hop,
+                        width: widget.dropletSize,
+                        height: widget.dropletSize,
+                        child: child!,
+                      );
+                    },
+                    child: IgnorePointer(
+                      child: LiquidGlassContainer(
+                        shape: const LiquidGlassShape.capsule(),
+                        style: widget.style,
+                        tint: widget.tint,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Fallback path: the classic sliding highlight pill.
+  Widget _buildClassic(BuildContext context) {
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     return LiquidGlassContainer(
       shape: const LiquidGlassShape.capsule(),
-      style: style,
-      height: height,
-      margin: margin,
+      style: widget.style,
+      height: widget.height,
+      margin: widget.margin,
       padding: const EdgeInsets.all(4),
-      fallbackIntensity: fallbackIntensity,
+      fallbackIntensity: widget.fallbackIntensity,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final itemWidth = constraints.maxWidth / items.length;
+          final itemWidth = constraints.maxWidth / widget.items.length;
           return Stack(
             children: [
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                left: itemWidth * currentIndex,
+                left: itemWidth * widget.currentIndex,
                 top: 0,
                 bottom: 0,
                 width: itemWidth,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: dark ? _pillDark : _pillLight,
+                    color: dark
+                        ? LiquidGlassBottomBar._pillDark
+                        : LiquidGlassBottomBar._pillLight,
                     borderRadius:
                         BorderRadius.circular(constraints.maxHeight / 2),
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  for (var i = 0; i < items.length; i++)
-                    Expanded(
-                      child: _BarItem(
-                        item: items[i],
-                        selected: i == currentIndex,
-                        selectedColor: selectedColor,
-                        unselectedColor: unselectedColor,
-                        showLabel: showLabels,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          onTap(i);
-                        },
-                      ),
-                    ),
-                ],
-              ),
+              _itemRow(context),
             ],
           );
         },
@@ -194,8 +314,7 @@ class _BarItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   height: 1.2,
-                  fontWeight:
-                      selected ? FontWeight.w600 : FontWeight.w500,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   color: color,
                 ),
               ),

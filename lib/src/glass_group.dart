@@ -109,13 +109,13 @@ class LiquidGlassGroupState extends State<LiquidGlassGroup> {
     }
     final view = defaultTargetPlatform == TargetPlatform.macOS
         ? AppKitView(
-            viewType: 'liquid_glass_container/glass_group',
+            viewType: 'real_liquid_glass/glass_group',
             creationParamsCodec: const StandardMessageCodec(),
             hitTestBehavior: PlatformViewHitTestBehavior.transparent,
             onPlatformViewCreated: _onViewCreated,
           )
         : UiKitView(
-            viewType: 'liquid_glass_container/glass_group',
+            viewType: 'real_liquid_glass/glass_group',
             creationParamsCodec: const StandardMessageCodec(),
             hitTestBehavior: PlatformViewHitTestBehavior.transparent,
             onPlatformViewCreated: _onViewCreated,
@@ -132,7 +132,7 @@ class LiquidGlassGroupState extends State<LiquidGlassGroup> {
   }
 
   void _onViewCreated(int id) {
-    _channel = MethodChannel('liquid_glass_container/glass_group_$id');
+    _channel = MethodChannel('real_liquid_glass/glass_group_$id');
     _scheduleFlush();
   }
 }

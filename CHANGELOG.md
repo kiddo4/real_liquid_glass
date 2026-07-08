@@ -12,8 +12,10 @@
   like droplets when within `spacing` of each other, driven natively by
   `UIGlassContainerEffect` / `NSGlassEffectContainerView`; N grouped
   containers share a single platform view.
-- `LiquidGlassBottomBar`: floating capsule tab bar with animated selection
-  pill, haptics, and screen-reader semantics.
+- `LiquidGlassBottomBar`: floating capsule tab bar with a liquid glass
+  droplet selection indicator that hops between destinations and merges
+  into the bar (sliding pill on fallback platforms), haptics, and
+  screen-reader semantics.
 - `LiquidGlass.capabilities()`: native-glass and Reduce Transparency
   introspection.
 - Automatic adaptation to the iOS 27 transparency slider and accessibility

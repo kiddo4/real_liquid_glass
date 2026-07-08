@@ -1,21 +1,21 @@
 PODS:
   - FlutterMacOS (1.0.0)
-  - liquid_glass_container (0.1.0):
+  - real_liquid_glass (0.1.0):
     - FlutterMacOS
 
 DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - liquid_glass_container (from `Flutter/ephemeral/.symlinks/plugins/liquid_glass_container/macos`)
+  - real_liquid_glass (from `Flutter/ephemeral/.symlinks/plugins/real_liquid_glass/macos`)
 
 EXTERNAL SOURCES:
   FlutterMacOS:
     :path: Flutter/ephemeral
-  liquid_glass_container:
-    :path: Flutter/ephemeral/.symlinks/plugins/liquid_glass_container/macos
+  real_liquid_glass:
+    :path: Flutter/ephemeral/.symlinks/plugins/real_liquid_glass/macos
 
 SPEC CHECKSUMS:
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
-  liquid_glass_container: c75a30b23ad74641c2c3aea3eececf704315e679
+  real_liquid_glass: a83a8a5e7d52491c2dac8c493b53e0fdc7f4baf0
 
 PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
 

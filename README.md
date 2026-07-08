@@ -1,8 +1,8 @@
-# liquid_glass_container
+# real_liquid_glass
 
 Real Liquid Glass for Flutter — not a shader imitation.
 
-<img src="https://raw.githubusercontent.com/kiddo4/liquid_glass_container/main/doc/demo.png" width="320" alt="Demo: a glass droplet merged into a glass pill, cards, and a floating glass bottom bar refracting a colorful backdrop" />
+<img src="https://raw.githubusercontent.com/kiddo4/real_liquid_glass/main/doc/demo.png" width="320" alt="Demo: a glass droplet merged into a glass pill, cards, and a floating glass bottom bar refracting a colorful backdrop" />
 
 On iOS 26+ and macOS 26+ these widgets host Apple's native glass material
 (`UIGlassEffect` / `NSGlassEffectView`) in a platform view beneath your
@@ -81,8 +81,12 @@ LiquidGlassBottomBar(
 ```
 
 Place it above your content (e.g. bottom-aligned in a `Stack`) so the glass
-has something to refract. A sliding highlight pill marks the selection;
-taps give haptic feedback; every destination is labeled for screen readers.
+has something to refract. On iOS/macOS the selection is marked by a **glass
+droplet riding the bar's rim**: tap a destination and it hops out of the
+glass, arcs across, and lands again, merging back in like a drop of water
+(`liquidSelection: false` opts out). Other platforms get a sliding
+highlight pill. Taps give haptic feedback; every destination is labeled
+for screen readers.
 
 ### `LiquidGlass.capabilities()`
 

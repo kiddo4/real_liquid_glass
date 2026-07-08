@@ -5,7 +5,7 @@
 import FlutterMacOS
 import Foundation
 
-import liquid_glass_container
+import real_liquid_glass
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   LiquidGlassContainerPlugin.register(with: registry.registrar(forPlugin: "LiquidGlassContainerPlugin"))

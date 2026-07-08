@@ -4,19 +4,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "liquid_glass_container",
+    name: "real_liquid_glass",
     platforms: [
         .iOS("13.0")
     ],
     products: [
-        .library(name: "liquid-glass-container", targets: ["liquid_glass_container"])
+        .library(name: "real-liquid-glass", targets: ["real_liquid_glass"])
     ],
     dependencies: [
         .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
-            name: "liquid_glass_container",
+            name: "real_liquid_glass",
             dependencies: [
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],
