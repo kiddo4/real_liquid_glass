@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- `LiquidGlassBottomBar` selection now matches the native iOS 26 tab bar:
+  the capsule is real glass on iOS/macOS, slides with a liquid stretch on
+  tap, pops the landing icon, and can be dragged along the bar with a
+  finger (replaces the 0.1.0 droplet indicator; `liquidSelection` and
+  `dropletSize` parameters removed).
+
 ## 0.1.0
 
 - Initial release.
@@ -12,9 +20,7 @@
   like droplets when within `spacing` of each other, driven natively by
   `UIGlassContainerEffect` / `NSGlassEffectContainerView`; N grouped
   containers share a single platform view.
-- `LiquidGlassBottomBar`: floating capsule tab bar with a liquid glass
-  droplet selection indicator that hops between destinations and merges
-  into the bar (sliding pill on fallback platforms), haptics, and
+- `LiquidGlassBottomBar`: floating capsule tab bar with haptics and
   screen-reader semantics.
 - `LiquidGlass.capabilities()`: native-glass and Reduce Transparency
   introspection.

@@ -81,12 +81,12 @@ LiquidGlassBottomBar(
 ```
 
 Place it above your content (e.g. bottom-aligned in a `Stack`) so the glass
-has something to refract. On iOS/macOS the selection is marked by a **glass
-droplet riding the bar's rim**: tap a destination and it hops out of the
-glass, arcs across, and lands again, merging back in like a drop of water
-(`liquidSelection: false` opts out). Other platforms get a sliding
-highlight pill. Taps give haptic feedback; every destination is labeled
-for screen readers.
+has something to refract. The selection capsule behaves like the native
+iOS 26 tab bar: on iOS/macOS it is **real glass** lensing the bar beneath
+it; tapping a destination sends it sliding over with a **liquid stretch**
+while the icon pops; and you can **drag it along the bar with your
+finger**, snapping to the nearest destination on release. Taps give haptic
+feedback; every destination is labeled for screen readers.
 
 ### `LiquidGlass.capabilities()`
 

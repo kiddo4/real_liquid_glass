@@ -4,7 +4,7 @@ description: >-
   UIGlassEffect on iOS 26+, adapts automatically to the iOS 27 transparency
   slider and accessibility settings, with a Flutter-drawn frosted fallback
   everywhere else.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/kiddo4/real_liquid_glass
 
 topics:
