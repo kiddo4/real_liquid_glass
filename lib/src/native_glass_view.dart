@@ -1,7 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
 import 'glass_style.dart';
 
@@ -18,12 +18,14 @@ class NativeGlassView extends StatefulWidget {
     required this.shape,
     required this.interactive,
     this.tint,
+    this.onTap,
   });
 
   final LiquidGlassStyle style;
   final LiquidGlassShape shape;
   final bool interactive;
   final Color? tint;
+  final VoidCallback? onTap;
 
   @override
   State<NativeGlassView> createState() => _NativeGlassViewState();
@@ -33,12 +35,13 @@ class _NativeGlassViewState extends State<NativeGlassView> {
   MethodChannel? _viewChannel;
 
   Map<String, Object?> get _params => {
-        'style': widget.style.name,
-        'tint': widget.tint?.toARGB32(),
-        'interactive': widget.interactive,
-        'capsule': widget.shape.capsule,
-        'cornerRadius': widget.shape.cornerRadius,
-      };
+    'style': widget.style.name,
+    'tint': widget.tint?.toARGB32(),
+    'interactive': widget.interactive,
+    'capsule': widget.shape.capsule,
+    'cornerRadius': widget.shape.cornerRadius,
+        'dark': CupertinoTheme.of(context).brightness == Brightness.dark,
+  };
 
   @override
   void didUpdateWidget(NativeGlassView oldWidget) {
@@ -49,6 +52,12 @@ class _NativeGlassViewState extends State<NativeGlassView> {
         widget.tint != oldWidget.tint) {
       _viewChannel?.invokeMethod<void>('update', _params);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _viewChannel?.invokeMethod<void>('update', _params);
   }
 
   @override
@@ -75,6 +84,16 @@ class _NativeGlassViewState extends State<NativeGlassView> {
   }
 
   void _onViewCreated(int id) {
-    _viewChannel = MethodChannel('real_liquid_glass/glass_view_$id');
+    final channel = MethodChannel('real_liquid_glass/glass_view_$id');
+    _viewChannel = channel;
+    channel.setMethodCallHandler((call) async {
+      if (call.method == 'tap') widget.onTap?.call();
+    });
+  }
+
+  @override
+  void dispose() {
+    _viewChannel?.setMethodCallHandler(null);
+    super.dispose();
   }
 }

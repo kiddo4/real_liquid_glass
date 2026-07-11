@@ -10,13 +10,13 @@ let package = Package(
         .library(name: "real-liquid-glass", targets: ["real_liquid_glass"])
     ],
     dependencies: [
-        .package(name: "FlutterMacOSFramework", path: "../FlutterMacOSFramework")
+        .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
             name: "real_liquid_glass",
             dependencies: [
-                .product(name: "FlutterMacOSFramework", package: "FlutterMacOSFramework")
+                .product(name: "FlutterFramework", package: "FlutterFramework")
             ]
         )
     ]

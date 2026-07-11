@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+- `LiquidGlassBottomBar` now embeds a complete native `UITabBar` on iOS, so
+  UIKit owns the iOS 26+ Liquid Glass surface and selection morph animation.
+- Added native SF Symbol configuration through `sfSymbol` and
+  `selectedSfSymbol` on `LiquidGlassBarItem`.
+- Replaced the old component playground with a focused four-tab example app.
+- Added `LiquidGlassContainer.onTap`, delivered by the native iOS glass view
+  so system interaction feedback and Flutter callbacks stay synchronized.
+- Native glass surfaces now inherit Flutter's light/dark platform brightness.
+
 ## 0.2.0
 
 - `LiquidGlassBottomBar` selection now matches the native iOS 26 tab bar:

@@ -2,7 +2,7 @@
 
 Real Liquid Glass for Flutter — not a shader imitation.
 
-<img src="https://raw.githubusercontent.com/kiddo4/real_liquid_glass/main/doc/demo.png" width="320" alt="Demo: a glass droplet merged into a glass pill, cards, and a floating glass bottom bar refracting a colorful backdrop" />
+<img src="https://raw.githubusercontent.com/kiddo4/real_liquid_glass/main/doc/demo.gif" width="320" alt="Demo recorded on an iPhone 17: a music app with glass cards, a glass mini-player, and the native Liquid Glass tab bar morphing between tabs" />
 
 On iOS 26+ and macOS 26+ these widgets host Apple's native glass material
 (`UIGlassEffect` / `NSGlassEffectView`) in a platform view beneath your
@@ -30,6 +30,7 @@ cards, pills, headers, floating panels:
 LiquidGlassContainer(
   shape: const LiquidGlassShape.roundedRectangle(16),
   padding: const EdgeInsets.all(20),
+  onTap: () => play(),
   child: const Text('Now playing'),
 )
 ```
@@ -37,7 +38,8 @@ LiquidGlassContainer(
 Options: `style` (`LiquidGlassStyle.regular` for legibility, `.clear` over
 media), `shape` (`.capsule()` or `.roundedRectangle(r)`), `tint`,
 `interactive` (Apple's touch shimmer), and `Container`-style `padding`,
-`margin`, `width`, `height`, `alignment`.
+`margin`, `width`, `height`, `alignment`. Supplying `onTap` automatically
+enables the native interactive material on iOS and requires no Swift setup.
 
 ### `LiquidGlassGroup` — true liquid merging
 
@@ -71,9 +73,21 @@ A floating capsule tab bar in the iOS 26/27 idiom, built on the container:
 ```dart
 LiquidGlassBottomBar(
   items: const [
-    LiquidGlassBarItem(icon: CupertinoIcons.house, label: 'Home'),
-    LiquidGlassBarItem(icon: CupertinoIcons.search, label: 'Search'),
-    LiquidGlassBarItem(icon: CupertinoIcons.person, label: 'Profile'),
+    LiquidGlassBarItem(
+      icon: CupertinoIcons.house,
+      sfSymbol: 'house',
+      label: 'Home',
+    ),
+    LiquidGlassBarItem(
+      icon: CupertinoIcons.search,
+      sfSymbol: 'magnifyingglass',
+      label: 'Search',
+    ),
+    LiquidGlassBarItem(
+      icon: CupertinoIcons.person,
+      sfSymbol: 'person',
+      label: 'Profile',
+    ),
   ],
   currentIndex: _index,
   onTap: (i) => setState(() => _index = i),
@@ -81,12 +95,11 @@ LiquidGlassBottomBar(
 ```
 
 Place it above your content (e.g. bottom-aligned in a `Stack`) so the glass
-has something to refract. The selection capsule behaves like the native
-iOS 26 tab bar: on iOS/macOS it is **real glass** lensing the bar beneath
-it; tapping a destination sends it sliding over with a **liquid stretch**
-while the icon pops; and you can **drag it along the bar with your
-finger**, snapping to the nearest destination on release. Taps give haptic
-feedback; every destination is labeled for screen readers.
+has something to refract. On iOS this widget is a complete native `UITabBar`,
+not a Flutter recreation: iOS owns the Liquid Glass surface, selection lens,
+touch response, accessibility, and system morphing animation. `sfSymbol` and
+`selectedSfSymbol` configure its native icons. Other platforms keep the
+Flutter-rendered fallback behind the same API.
 
 ### `LiquidGlass.capabilities()`
 
@@ -132,5 +145,5 @@ containers** and **macOS support** — and zero Dart dependencies.
 
 ## Example
 
-`example/` contains a full demo: glass cards over a vivid backdrop, a
-style/intensity control panel, and the floating bottom bar.
+`example/` contains the four-tab music app shown above: glass cards and a
+mini-player over rich artwork, driven by the native Liquid Glass tab bar.

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'capabilities.dart';
@@ -15,6 +16,8 @@ class LiquidGlassBarItem {
   const LiquidGlassBarItem({
     required this.icon,
     this.selectedIcon,
+    required this.sfSymbol,
+    this.selectedSfSymbol,
     required this.label,
   });
 
@@ -23,6 +26,12 @@ class LiquidGlassBarItem {
 
   /// Icon shown when selected; falls back to [icon].
   final IconData? selectedIcon;
+
+  /// SF Symbol rendered by the native iOS tab bar.
+  final String sfSymbol;
+
+  /// Optional selected-state SF Symbol; defaults to [sfSymbol].
+  final String? selectedSfSymbol;
 
   /// Short destination name, shown under the icon and used for
   /// accessibility.
@@ -64,8 +73,8 @@ class LiquidGlassBottomBar extends StatefulWidget {
     required this.onTap,
     this.tint,
     this.style = LiquidGlassStyle.regular,
-    this.height = 64,
-    this.margin = const EdgeInsets.fromLTRB(24, 8, 24, 16),
+    this.height = 85,
+    this.margin = EdgeInsets.zero,
     this.showLabels = true,
     this.fallbackIntensity = 1.0,
   }) : assert(items.length >= 2, 'Provide at least two destinations');
@@ -160,6 +169,20 @@ class _LiquidGlassBottomBarState extends State<LiquidGlassBottomBar> {
 
   @override
   Widget build(BuildContext context) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return Padding(
+        padding: widget.margin,
+        child: SizedBox(
+          height: widget.height,
+          child: _NativeLiquidGlassTabBar(
+            items: widget.items,
+            currentIndex: widget.currentIndex,
+            onTap: _select,
+            tint: widget.tint ?? CupertinoTheme.of(context).primaryColor,
+          ),
+        ),
+      );
+    }
     final selectedColor =
         widget.tint ?? CupertinoTheme.of(context).primaryColor;
     final unselectedColor = CupertinoColors.secondaryLabel.resolveFrom(context);
@@ -177,13 +200,16 @@ class _LiquidGlassBottomBarState extends State<LiquidGlassBottomBar> {
           final itemWidth = barWidth / widget.items.length;
           final dragging = _dragX != null;
           // While dragging, the highlight follows the finger live.
-          final activeIndex =
-              dragging ? _indexAt(_dragX!, barWidth) : widget.currentIndex;
+          final activeIndex = dragging
+              ? _indexAt(_dragX!, barWidth)
+              : widget.currentIndex;
 
           Widget capsuleLayer;
           if (dragging) {
-            final left =
-                (_dragX! - itemWidth / 2).clamp(0.0, barWidth - itemWidth);
+            final left = (_dragX! - itemWidth / 2).clamp(
+              0.0,
+              barWidth - itemWidth,
+            );
             capsuleLayer = Positioned(
               left: left,
               top: 0,
@@ -210,8 +236,10 @@ class _LiquidGlassBottomBarState extends State<LiquidGlassBottomBar> {
                 final stretchedWidth = itemWidth * (1 + 0.28 * travel);
                 final squash = 2.5 * travel;
                 return Positioned(
-                  left: (center - stretchedWidth / 2)
-                      .clamp(0.0, barWidth - stretchedWidth),
+                  left: (center - stretchedWidth / 2).clamp(
+                    0.0,
+                    barWidth - stretchedWidth,
+                  ),
                   top: squash,
                   bottom: squash,
                   width: stretchedWidth,
@@ -228,7 +256,8 @@ class _LiquidGlassBottomBarState extends State<LiquidGlassBottomBar> {
             onHorizontalDragStart: (details) =>
                 setState(() => _dragX = details.localPosition.dx),
             onHorizontalDragUpdate: (details) => setState(
-                () => _dragX = details.localPosition.dx.clamp(0.0, barWidth)),
+              () => _dragX = details.localPosition.dx.clamp(0.0, barWidth),
+            ),
             onHorizontalDragEnd: (_) {
               final index = _indexAt(_dragX!, barWidth);
               setState(() => _dragX = null);
@@ -259,6 +288,68 @@ class _LiquidGlassBottomBarState extends State<LiquidGlassBottomBar> {
       ),
     );
   }
+}
+
+class _NativeLiquidGlassTabBar extends StatefulWidget {
+  const _NativeLiquidGlassTabBar({
+    required this.items,
+    required this.currentIndex,
+    required this.onTap,
+    required this.tint,
+  });
+
+  final List<LiquidGlassBarItem> items;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final Color tint;
+
+  @override
+  State<_NativeLiquidGlassTabBar> createState() =>
+      _NativeLiquidGlassTabBarState();
+}
+
+class _NativeLiquidGlassTabBarState extends State<_NativeLiquidGlassTabBar> {
+  MethodChannel? _channel;
+
+  Map<String, Object> get _params => {
+    'labels': widget.items.map((item) => item.label).toList(),
+    'symbols': widget.items.map((item) => item.sfSymbol).toList(),
+    'selectedSymbols': widget.items
+        .map((item) => item.selectedSfSymbol ?? item.sfSymbol)
+        .toList(),
+    'currentIndex': widget.currentIndex,
+    'tint': widget.tint.toARGB32(),
+    'dark': CupertinoTheme.of(context).brightness == Brightness.dark,
+  };
+
+  @override
+  void didUpdateWidget(_NativeLiquidGlassTabBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _channel?.invokeMethod<void>('update', _params);
+  }
+
+  @override
+  void dispose() {
+    _channel?.setMethodCallHandler(null);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => UiKitView(
+    viewType: 'real_liquid_glass/tab_bar',
+    creationParams: _params,
+    creationParamsCodec: const StandardMessageCodec(),
+    onPlatformViewCreated: (id) {
+      final channel = MethodChannel('real_liquid_glass/tab_bar_$id');
+      _channel = channel;
+      channel.setMethodCallHandler((call) async {
+        if (call.method == 'selected') {
+          final args = call.arguments as Map<Object?, Object?>;
+          widget.onTap(args['index']! as int);
+        }
+      });
+    },
+  );
 }
 
 class _BarItem extends StatelessWidget {

@@ -34,6 +34,7 @@ class LiquidGlassContainer extends StatelessWidget {
     this.shape = const LiquidGlassShape.roundedRectangle(24),
     this.tint,
     this.interactive = false,
+    this.onTap,
     this.padding,
     this.margin,
     this.alignment,
@@ -60,6 +61,11 @@ class LiquidGlassContainer extends StatelessWidget {
   /// bounce (iOS 26+ only). Leave false for purely decorative surfaces so
   /// touches pass through to Flutter widgets behind the container.
   final bool interactive;
+
+  /// Called when the surface is tapped. On iOS this is delivered by the
+  /// native glass view, so Apple's interactive shimmer and the callback share
+  /// the same touch. Supplying a callback automatically enables interaction.
+  final VoidCallback? onTap;
 
   /// Inner padding around [child].
   final EdgeInsetsGeometry? padding;
@@ -104,7 +110,8 @@ class LiquidGlassContainer extends StatelessWidget {
               style: style,
               shape: shape,
               tint: tint,
-              interactive: interactive,
+              interactive: interactive || onTap != null,
+              onTap: onTap,
             );
     }
 
@@ -128,6 +135,11 @@ class LiquidGlassContainer extends StatelessWidget {
     }
     if (margin != null) {
       result = Padding(padding: margin!, child: result);
+    }
+    if (onTap != null &&
+        (!LiquidGlass.isNativePlatform ||
+            GlassGroupScope.maybeOf(context) != null)) {
+      result = GestureDetector(onTap: onTap, child: result);
     }
     return result;
   }

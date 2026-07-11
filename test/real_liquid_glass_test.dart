@@ -8,39 +8,43 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Widget host(Widget child) => CupertinoApp(
-        home: CupertinoPageScaffold(child: Center(child: child)),
-      );
+    home: CupertinoPageScaffold(child: Center(child: child)),
+  );
 
   group('LiquidGlassContainer (fallback path)', () {
     // Widget tests run with a non-iOS defaultTargetPlatform unless
     // overridden, so these exercise the Flutter-drawn fallback.
     testWidgets('renders its child', (tester) async {
-      await tester.pumpWidget(host(
-        const LiquidGlassContainer(
-          padding: EdgeInsets.all(16),
-          child: Text('Now playing'),
+      await tester.pumpWidget(
+        host(
+          const LiquidGlassContainer(
+            padding: EdgeInsets.all(16),
+            child: Text('Now playing'),
+          ),
         ),
-      ));
+      );
       expect(find.text('Now playing'), findsOneWidget);
       expect(find.byType(BackdropFilter), findsOneWidget);
     });
 
     testWidgets('respects fixed dimensions', (tester) async {
-      await tester.pumpWidget(host(
-        const LiquidGlassContainer(width: 200, height: 80),
-      ));
+      await tester.pumpWidget(
+        host(const LiquidGlassContainer(width: 200, height: 80)),
+      );
       final size = tester.getSize(find.byType(LiquidGlassContainer));
       expect(size, const Size(200, 80));
     });
 
     testWidgets('fallbackIntensity 0 removes the blur', (tester) async {
-      await tester.pumpWidget(host(
-        const LiquidGlassContainer(
-          width: 100,
-          height: 50,
-          fallbackIntensity: 0,
+      await tester.pumpWidget(
+        host(
+          const LiquidGlassContainer(
+            width: 100,
+            height: 50,
+            fallbackIntensity: 0,
+          ),
         ),
-      ));
+      );
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
@@ -48,61 +52,88 @@ void main() {
       await tester.pumpWidget(
         MediaQuery(
           data: const MediaQueryData(highContrast: true),
-          child: host(
-            const LiquidGlassContainer(width: 100, height: 50),
-          ),
+          child: host(const LiquidGlassContainer(width: 100, height: 50)),
         ),
       );
       expect(find.byType(BackdropFilter), findsNothing);
+    });
+
+    testWidgets('onTap works through the fallback surface', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        host(
+          LiquidGlassContainer(
+            width: 140,
+            height: 60,
+            onTap: () => taps++,
+            child: const Center(child: Text('Tap glass')),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Tap glass'));
+      expect(taps, 1);
     });
   });
 
   group('LiquidGlassContainer (native path)', () {
     testWidgets('uses a platform view on iOS', (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      await tester.pumpWidget(host(
-        const LiquidGlassContainer(width: 100, height: 50),
-      ));
+      await tester.pumpWidget(
+        host(const LiquidGlassContainer(width: 100, height: 50)),
+      );
       expect(find.byType(UiKitView), findsOneWidget);
       expect(find.byType(BackdropFilter), findsNothing);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    testWidgets('onTap enables native interactive glass', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      await tester.pumpWidget(
+        host(LiquidGlassContainer(width: 100, height: 50, onTap: () {})),
+      );
+      final view = tester.widget<UiKitView>(find.byType(UiKitView));
+      expect(
+        (view.creationParams! as Map<String, Object?>)['interactive'],
+        isTrue,
+      );
       debugDefaultTargetPlatformOverride = null;
     });
   });
 
   group('LiquidGlassGroup', () {
     Widget twoShapes() => host(
-          SizedBox(
-            width: 300,
-            height: 200,
-            child: LiquidGlassGroup(
-              child: const Stack(
-                children: [
-                  Positioned(
-                    left: 10,
-                    top: 10,
-                    child: LiquidGlassContainer(width: 80, height: 80),
-                  ),
-                  Positioned(
-                    right: 10,
-                    bottom: 10,
-                    child: LiquidGlassContainer(width: 80, height: 80),
-                  ),
-                ],
+      SizedBox(
+        width: 300,
+        height: 200,
+        child: LiquidGlassGroup(
+          child: const Stack(
+            children: [
+              Positioned(
+                left: 10,
+                top: 10,
+                child: LiquidGlassContainer(width: 80, height: 80),
               ),
-            ),
+              Positioned(
+                right: 10,
+                bottom: 10,
+                child: LiquidGlassContainer(width: 80, height: 80),
+              ),
+            ],
           ),
-        );
+        ),
+      ),
+    );
 
-    testWidgets('on iOS, N containers share one platform view',
-        (tester) async {
+    testWidgets('on iOS, N containers share one platform view', (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await tester.pumpWidget(twoShapes());
       expect(find.byType(UiKitView), findsOneWidget);
       debugDefaultTargetPlatformOverride = null;
     });
 
-    testWidgets('off-iOS, is a passthrough with per-container fallbacks',
-        (tester) async {
+    testWidgets('off-iOS, is a passthrough with per-container fallbacks', (
+      tester,
+    ) async {
       await tester.pumpWidget(twoShapes());
       expect(find.byType(UiKitView), findsNothing);
       expect(find.byType(BackdropFilter), findsNWidgets(2));
@@ -111,20 +142,30 @@ void main() {
 
   group('LiquidGlassBottomBar', () {
     const items = [
-      LiquidGlassBarItem(icon: CupertinoIcons.house, label: 'Home'),
-      LiquidGlassBarItem(icon: CupertinoIcons.search, label: 'Search'),
-      LiquidGlassBarItem(icon: CupertinoIcons.person, label: 'Profile'),
+      LiquidGlassBarItem(
+        icon: CupertinoIcons.house,
+        sfSymbol: 'house',
+        label: 'Home',
+      ),
+      LiquidGlassBarItem(
+        icon: CupertinoIcons.search,
+        sfSymbol: 'magnifyingglass',
+        label: 'Search',
+      ),
+      LiquidGlassBarItem(
+        icon: CupertinoIcons.person,
+        sfSymbol: 'person',
+        label: 'Profile',
+      ),
     ];
 
     testWidgets('shows every destination and reports taps', (tester) async {
       final taps = <int>[];
-      await tester.pumpWidget(host(
-        LiquidGlassBottomBar(
-          items: items,
-          currentIndex: 0,
-          onTap: taps.add,
+      await tester.pumpWidget(
+        host(
+          LiquidGlassBottomBar(items: items, currentIndex: 0, onTap: taps.add),
         ),
-      ));
+      );
       expect(find.text('Home'), findsOneWidget);
       expect(find.text('Search'), findsOneWidget);
       expect(find.text('Profile'), findsOneWidget);
@@ -135,13 +176,11 @@ void main() {
 
     testWidgets('marks the current destination as selected', (tester) async {
       final handle = tester.ensureSemantics();
-      await tester.pumpWidget(host(
-        LiquidGlassBottomBar(
-          items: items,
-          currentIndex: 1,
-          onTap: (_) {},
+      await tester.pumpWidget(
+        host(
+          LiquidGlassBottomBar(items: items, currentIndex: 1, onTap: (_) {}),
         ),
-      ));
+      );
       expect(
         tester.getSemantics(find.bySemanticsLabel('Search')),
         isSemantics(isSelected: true, isButton: true, label: 'Search'),
@@ -150,15 +189,28 @@ void main() {
     });
 
     testWidgets('hides labels when showLabels is false', (tester) async {
-      await tester.pumpWidget(host(
-        LiquidGlassBottomBar(
-          items: items,
-          currentIndex: 0,
-          onTap: (_) {},
-          showLabels: false,
+      await tester.pumpWidget(
+        host(
+          LiquidGlassBottomBar(
+            items: items,
+            currentIndex: 0,
+            onTap: (_) {},
+            showLabels: false,
+          ),
         ),
-      ));
+      );
       expect(find.text('Home'), findsNothing);
+    });
+
+    testWidgets('uses a complete native UITabBar on iOS', (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      await tester.pumpWidget(
+        host(
+          LiquidGlassBottomBar(items: items, currentIndex: 0, onTap: (_) {}),
+        ),
+      );
+      expect(find.byType(UiKitView), findsOneWidget);
+      debugDefaultTargetPlatformOverride = null;
     });
   });
 

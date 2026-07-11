@@ -1,21 +1,21 @@
 PODS:
   - Flutter (1.0.0)
-  - liquid_glass_container (0.0.1):
+  - real_liquid_glass (0.3.0):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - liquid_glass_container (from `.symlinks/plugins/liquid_glass_container/ios`)
+  - real_liquid_glass (from `.symlinks/plugins/real_liquid_glass/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  liquid_glass_container:
-    :path: ".symlinks/plugins/liquid_glass_container/ios"
+  real_liquid_glass:
+    :path: ".symlinks/plugins/real_liquid_glass/ios"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  liquid_glass_container: 631111a210b002304edf5270e2e79220f6d48278
+  real_liquid_glass: 64868b726a31c4e9b5c5e04870aa34ce59685efd
 
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
 
